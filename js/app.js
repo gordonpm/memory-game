@@ -58,102 +58,162 @@ function addCardsToDeck(iconArray) {
  *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
  *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
  */
-var previousCard;
 var moves;
 const movesSpan = document.querySelector(".moves");
-var countMatches;
+var countMatches = 0;
 var rating;
 const stars = document.querySelector(".stars");
 
-for (star of stars.children) {
-    console.log(star.nodeName);
-}
-stars.removeChild(stars.children[2]);
-
 startGame();
 
-
-
-function respondToCardClick(event) {
-    card = event.target;
+function openCard(card) {
     card.classList.add('open');
     card.classList.add('show');   
+}
+
+function closeCards(turn) {
+    //for (card of turn) {
+        //card.classList.remove('open');
+        //card.classList.remove('show');   
+        turn[0].classList.add("nomatch");
+        turn[1].classList.add("nomatch");
+        setTimeout(function() {
+            //card.classList.remove("nomatch");
+            turn[0].classList.remove('open');
+            turn[0].classList.remove('show');
+            turn[0].classList.remove('nomatch');
+            turn[1].classList.remove('open');
+            turn[1].classList.remove('show');
+            turn[1  ].classList.remove('nomatch');
+        }, 1000);
+    //}
+}
+
+function makeUnclickable(card) {
     card.classList.add('unclickable');
-        
-    let currentCardImage = getCardImage(card);
-    if (previousCard != null) {
-        let previousCardImage = getCardImage(previousCard);
-        if (previousCardImage === currentCardImage) {
-            console.log('match found');
+}
+
+function makeClickable(card) {
+    card.classList.remove('unclickable');
+}
+
+function checkIfCardsMatch(turn) {
+    if (getCardImage(turn[0]) === getCardImage(turn[1])) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+var turn = [];
+function respondToCardClick(event) {
+    var card = event.target;
+    if (card.nodeName != "UL") { // check if same card is not clicked again
+        turn.push(card);
+        console.log("card clicked");
+        openCard(card);
+        makeUnclickable(card);
+    }
+
+    if (turn.length === 2) {
+        // check if cards match, keep both cards open, moves++, change rating if needed. if all cards matched, display modal.
+        if (checkIfCardsMatch(turn)) {
             countMatches++;
-            if (countMatches === 8) {
-                console.log('Game over');
-                document.querySelector(".modal").style.display = "block";
-                document.querySelector(".movesCounter").textContent = moves;
-                document.querySelector(".rating").textContent = rating;
-                const cards = document.querySelectorAll(".card");
-                cards.forEach(card => {
-                    card.classList.remove('open');
-                    card.classList.remove('show');
-                    card.classList.remove('unclickable'); 
-                });
-            }
         }
-        else {
-            console.log('match not found');
-            card.classList.remove('open');
-            card.classList.remove('show');
-            previousCard.classList.remove('open');
-            previousCard.classList.remove('show');
-            card.classList.remove('unclickable');
-            previousCard.classList.remove('unclickable');
+        // else cards do not match, close both cards, moves++, change rating if needed. 
+        else if (!checkIfCardsMatch(turn)){
+            closeCards(turn);
+            makeClickable(turn[0]);
+            makeClickable(turn[1]);
         }
+        
+        turn = [];
         moves++;
         movesSpan.innerHTML = moves;    
         updateRating();
-        previousCard = null;
-    }
-    else {
-        previousCard = card;
+        if (countMatches === 8) {
+            console.log('Game over');
+            document.querySelector(".modal").style.display = "block";
+            document.querySelector(".movesCounter").textContent = moves;
+            document.querySelector(".rating").textContent = rating;
+        }
     }
 }
 
 function updateRating() {
     if (moves > 8 && moves <= 16) {
         // remove last li 
+        stars.removeChild(stars.children[2]);
+
         // append li with empty star icon
+        // <li><i class="fa fa-star"></i></li>
+        liElement = document.createElement("li");
+        liElement.classList.add("fa", "fa-star-o");
+        stars.appendChild(liElement);
+        rating = 2;
     }
     else if (moves > 16 && moves <= 24) {
         // remove second last li
+        stars.removeChild(stars.children[1]);
+        
         // replace with empty star icon so that there will be 1 full and 2 empty stars
+        liElement = document.createElement("li");
+        liElement.classList.add("fa", "fa-star-o");
+        stars.appendChild(liElement);
+        rating = 1;
     }
     else if (moves > 24) {
         // remove all li's and replace with 3 empty star li's
+        for (star of stars.children) {
+            stars.removeChild(star);
+        }
+        for (let i = 0; i < 3; i++) {
+            liElement = document.createElement("li");
+            liElement.classList.add("fa", "fa-star-o");
+            stars.appendChild(liElement);
+        }
+        rating = 0;
     }
 }
 
 function startGame() {
-    previousCard = null;
     moves = 0;
     countMatches = 0;
     rating = 3;
+    console.log(deck.children.length);
+    while (deck.firstChild) {
+        deck.removeChild(deck.firstChild);
+    }
     iconArray = shuffle(iconArray);
     addCardsToDeck(iconArray);
+    movesSpan.innerHTML = moves;    
+    while (stars.firstChild) {
+        stars.removeChild(stars.firstChild);
+    }
+    for (let i = 0; i < 3; i++) {
+        liElement = document.createElement("li");
+        liElement.classList.add("fa", "fa-star");
+        stars.appendChild(liElement);
+    }
 } 
  
 function getCardImage(card) { // refactor to use children instead of childNodes
-    const nodes = card.childNodes;
+    const nodes = card.children;
     for (let i = 0; i < nodes.length; i++) {
-        if (nodes[i].classList != undefined) {
-            let classList = nodes[i].classList;
-            console.log(classList[1]);
-            return classList[1];
-        }
+        let classList = nodes[i].classList;
+        console.log(classList[1]);
+        return classList[1];
     }
 }
 
 var playBtn = document.querySelector(".playBtn");
 playBtn.addEventListener("click", function(){
     document.querySelector(".modal").style.display = "none";
+    startGame();
+});
+
+var restartBtn = document.querySelector(".restart");
+restartBtn.addEventListener("click", function(){
     startGame();
 });
