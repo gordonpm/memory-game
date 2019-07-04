@@ -72,19 +72,15 @@ function openCard(card) {
 }
 
 function closeCards(turn) {
-    //for (card of turn) {
-        //card.classList.remove('open');
-        //card.classList.remove('show');   
         turn[0].classList.add("nomatch");
         turn[1].classList.add("nomatch");
         setTimeout(function() {
-            //card.classList.remove("nomatch");
             turn[0].classList.remove('open');
             turn[0].classList.remove('show');
             turn[0].classList.remove('nomatch');
             turn[1].classList.remove('open');
             turn[1].classList.remove('show');
-            turn[1  ].classList.remove('nomatch');
+            turn[1].classList.remove('nomatch');
         }, 1000);
     //}
 }
@@ -106,6 +102,11 @@ function checkIfCardsMatch(turn) {
     }
 }
 
+function applyMatchStyle(turn) {
+    turn[0].classList.add("match");
+    turn[1].classList.add("match");
+}
+
 var turn = [];
 function respondToCardClick(event) {
     var card = event.target;
@@ -120,6 +121,7 @@ function respondToCardClick(event) {
         // check if cards match, keep both cards open, moves++, change rating if needed. if all cards matched, display modal.
         if (checkIfCardsMatch(turn)) {
             countMatches++;
+            applyMatchStyle(turn);
         }
         // else cards do not match, close both cards, moves++, change rating if needed. 
         else if (!checkIfCardsMatch(turn)){
@@ -198,7 +200,7 @@ function startGame() {
     }
 } 
  
-function getCardImage(card) { // refactor to use children instead of childNodes
+function getCardImage(card) { 
     const nodes = card.children;
     for (let i = 0; i < nodes.length; i++) {
         let classList = nodes[i].classList;
