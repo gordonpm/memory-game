@@ -1,18 +1,18 @@
 /*
  * Create a list that holds all of your cards
  */
-var icons = ["fa-diamond", "fa-paper-plane-o", "fa-anchor", "fa-bolt", "fa-cube", "fa-bomb", "fa-leaf", "fa-bicycle"];
+const icons = ["fa-diamond", "fa-paper-plane-o", "fa-anchor", "fa-bolt", "fa-cube", "fa-bomb", "fa-leaf", "fa-bicycle"];
 var iconArray = [];
-
+var moves;
+var turn = [];
+const movesSpan = document.querySelector(".moves");
+var countMatches = 0;
+var rating;
+const stars = document.querySelector(".stars");
 const deck = document.querySelector(".deck");
-deck.addEventListener("click", respondToCardClick);
 
-// build a new array which has 2 icons of each type
-for (const icon of icons) {
-    iconArray.push(icon);
-    iconArray.push(icon);
-}
-
+initialize();
+startGame();
 
 /*
  * Display the cards on the page
@@ -48,23 +48,26 @@ function addCardsToDeck(iconArray) {
     }
 }
 
-/*
- * set up the event listener for a card. If a card is clicked:
- *  - display the card's symbol (put this functionality in another function that you call from this one)
- *  - add the card to a *list* of "open" cards (put this functionality in another function that you call from this one)
- *  - if the list already has another card, check to see if the two cards match
- *    + if the cards do match, lock the cards in the open position (put this functionality in another function that you call from this one)
- *    + if the cards do not match, remove the cards from the list and hide the card's symbol (put this functionality in another function that you call from this one)
- *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
- *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
- */
-var moves;
-const movesSpan = document.querySelector(".moves");
-var countMatches = 0;
-var rating;
-const stars = document.querySelector(".stars");
+function initialize() {
+    // build a new array which has 2 icons of each type
+    for (const icon of icons) {
+        iconArray.push(icon);
+        iconArray.push(icon);
+    }
 
-startGame();
+    deck.addEventListener("click", respondToCardClick);
+
+    var playBtn = document.querySelector(".playBtn");
+    playBtn.addEventListener("click", function(){
+        document.querySelector(".modal").style.display = "none";
+        startGame();
+    });
+
+    var restartBtn = document.querySelector(".restart");
+    restartBtn.addEventListener("click", function(){
+        startGame();
+    });
+}
 
 function openCard(card) {
     card.classList.add('open');
@@ -72,17 +75,16 @@ function openCard(card) {
 }
 
 function closeCards(turn) {
-        turn[0].classList.add("nomatch");
-        turn[1].classList.add("nomatch");
-        setTimeout(function() {
-            turn[0].classList.remove('open');
-            turn[0].classList.remove('show');
-            turn[0].classList.remove('nomatch');
-            turn[1].classList.remove('open');
-            turn[1].classList.remove('show');
-            turn[1].classList.remove('nomatch');
-        }, 1000);
-    //}
+    turn[0].classList.add("nomatch");
+    turn[1].classList.add("nomatch");
+    setTimeout(function() {
+        turn[0].classList.remove('open');
+        turn[0].classList.remove('show');
+        turn[0].classList.remove('nomatch');
+        turn[1].classList.remove('open');
+        turn[1].classList.remove('show');
+        turn[1].classList.remove('nomatch');
+    }, 1000);
 }
 
 function makeUnclickable(card) {
@@ -107,7 +109,7 @@ function applyMatchStyle(turn) {
     turn[1].classList.add("match");
 }
 
-var turn = [];
+
 function respondToCardClick(event) {
     var card = event.target;
     if (card.nodeName != "UL") { // check if same card is not clicked again
@@ -183,21 +185,25 @@ function startGame() {
     moves = 0;
     countMatches = 0;
     rating = 3;
-    console.log(deck.children.length);
+    
     while (deck.firstChild) {
         deck.removeChild(deck.firstChild);
     }
     iconArray = shuffle(iconArray);
     addCardsToDeck(iconArray);
     movesSpan.innerHTML = moves;    
+
     while (stars.firstChild) {
         stars.removeChild(stars.firstChild);
     }
+
     for (let i = 0; i < 3; i++) {
         liElement = document.createElement("li");
         liElement.classList.add("fa", "fa-star");
         stars.appendChild(liElement);
     }
+
+    
 } 
  
 function getCardImage(card) { 
@@ -208,14 +214,3 @@ function getCardImage(card) {
         return classList[1];
     }
 }
-
-var playBtn = document.querySelector(".playBtn");
-playBtn.addEventListener("click", function(){
-    document.querySelector(".modal").style.display = "none";
-    startGame();
-});
-
-var restartBtn = document.querySelector(".restart");
-restartBtn.addEventListener("click", function(){
-    startGame();
-});
