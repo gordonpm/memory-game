@@ -10,6 +10,9 @@ var countMatches = 0;
 var rating;
 const stars = document.querySelector(".stars");
 const deck = document.querySelector(".deck");
+const minutes = document.querySelector(".minutes");
+const seconds = document.querySelector(".seconds");
+var totalSeconds = 0;
 
 initialize();
 startGame();
@@ -60,13 +63,24 @@ function initialize() {
     var playBtn = document.querySelector(".playBtn");
     playBtn.addEventListener("click", function(){
         document.querySelector(".modal").style.display = "none";
+        totalSeconds = 0;
+        stopTimer();
+        clearTimer();
         startGame();
     });
 
     var restartBtn = document.querySelector(".restart");
     restartBtn.addEventListener("click", function(){
+        totalSeconds = 0;
+        stopTimer();
+        clearTimer();
         startGame();
     });
+}
+
+function clearTimer() {
+    minutes.innerHTML = 00;
+    seconds.innerHTML = 00;
 }
 
 function openCard(card) {
@@ -84,6 +98,12 @@ function closeCards(turn) {
         turn[1].classList.remove('open');
         turn[1].classList.remove('show');
         turn[1].classList.remove('nomatch');
+    }, 1000);
+    setTimeout(function() {
+        deck.removeEventListener("click", respondToCardClick);
+    }, 0);
+    setTimeout(function() {
+        deck.addEventListener("click", respondToCardClick);
     }, 1000);
 }
 
@@ -109,12 +129,33 @@ function applyMatchStyle(turn) {
     turn[1].classList.add("match");
 }
 
+function pad(val) {
+    var valString = val + "";
+    if (valString.length < 2) {
+      return "0" + valString;
+    } else {
+      return valString;
+    }
+}
+
+function stopTimer() {
+    clearInterval(intervalId);
+  }
+
+function setTime() {
+    ++totalSeconds;
+    seconds.innerHTML = pad(totalSeconds % 60);
+    minutes.innerHTML = pad(parseInt(totalSeconds / 60));
+}
 
 function respondToCardClick(event) {
     var card = event.target;
+    if (moves === 0 && turn.length === 0) { // start timer after first card is clicked
+        intervalId = setInterval(setTime, 1000);
+    }
+
     if (card.nodeName != "UL") { // check if same card is not clicked again
         turn.push(card);
-        console.log("card clicked");
         openCard(card);
         makeUnclickable(card);
     }
@@ -137,6 +178,7 @@ function respondToCardClick(event) {
         movesSpan.innerHTML = moves;    
         updateRating();
         if (countMatches === 8) {
+            stopTimer();
             console.log('Game over');
             document.querySelector(".modal").style.display = "block";
             document.querySelector(".movesCounter").textContent = moves;
@@ -146,7 +188,7 @@ function respondToCardClick(event) {
 }
 
 function updateRating() {
-    if (moves > 8 && moves <= 16) {
+    if (moves > 16 && moves <= 24) {
         // remove last li 
         stars.removeChild(stars.children[2]);
 
@@ -157,7 +199,7 @@ function updateRating() {
         stars.appendChild(liElement);
         rating = 2;
     }
-    else if (moves > 16 && moves <= 24) {
+    else if (moves > 24) {
         // remove second last li
         stars.removeChild(stars.children[1]);
         
@@ -166,18 +208,6 @@ function updateRating() {
         liElement.classList.add("fa", "fa-star-o");
         stars.appendChild(liElement);
         rating = 1;
-    }
-    else if (moves > 24) {
-        // remove all li's and replace with 3 empty star li's
-        for (star of stars.children) {
-            stars.removeChild(star);
-        }
-        for (let i = 0; i < 3; i++) {
-            liElement = document.createElement("li");
-            liElement.classList.add("fa", "fa-star-o");
-            stars.appendChild(liElement);
-        }
-        rating = 0;
     }
 }
 
@@ -202,8 +232,6 @@ function startGame() {
         liElement.classList.add("fa", "fa-star");
         stars.appendChild(liElement);
     }
-
-    
 } 
  
 function getCardImage(card) { 
