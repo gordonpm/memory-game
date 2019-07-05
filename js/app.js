@@ -2,54 +2,21 @@
  * Create a list that holds all of your cards
  */
 const icons = ["fa-diamond", "fa-paper-plane-o", "fa-anchor", "fa-bolt", "fa-cube", "fa-bomb", "fa-leaf", "fa-bicycle"];
-var iconArray = [];
-var moves;
-var turn = [];
-const movesSpan = document.querySelector(".moves");
+var moves = 0;
 var countMatches = 0;
-var rating;
-const stars = document.querySelector(".stars");
+var rating = 3;
+var totalSeconds = 0;
+var iconArray = [];
+var turn = [];
+
 const deck = document.querySelector(".deck");
+const movesSpan = document.querySelector(".moves");
+const stars = document.querySelector(".stars");
 const minutes = document.querySelector(".minutes");
 const seconds = document.querySelector(".seconds");
-var totalSeconds = 0;
 
 initialize();
 startGame();
-
-/*
- * Display the cards on the page
- *   - shuffle the list of cards using the provided "shuffle" method below
- *   - loop through each card and create its HTML
- *   - add each card's HTML to the page
- */
-
-// Shuffle function from http://stackoverflow.com/a/2450976
-function shuffle(array) {
-    var currentIndex = array.length, temporaryValue, randomIndex;
-
-    while (currentIndex !== 0) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
-    }
-
-    return array;
-}
-
-function addCardsToDeck(iconArray) {
-    for (icon of iconArray) {
-        liElement = document.createElement("li");
-        liElement.classList.add("card");
-        iconElement = document.createElement("i");
-        iconElement.classList.add("fa");
-        iconElement.classList.add(icon);
-        liElement.appendChild(iconElement);
-        deck.appendChild(liElement);
-    }
-}
 
 function initialize() {
     // build a new array which has 2 icons of each type
@@ -58,6 +25,7 @@ function initialize() {
         iconArray.push(icon);
     }
 
+    // add the listener to the deck which in turn listens to card clicks
     deck.addEventListener("click", respondToCardClick);
 
     var playBtn = document.querySelector(".playBtn");
@@ -78,76 +46,36 @@ function initialize() {
     });
 }
 
-function clearTimer() {
-    minutes.innerHTML = 00;
-    seconds.innerHTML = 00;
-}
-
-function openCard(card) {
-    card.classList.add('open');
-    card.classList.add('show');   
-}
-
-function closeCards(turn) {
-    turn[0].classList.add("nomatch");
-    turn[1].classList.add("nomatch");
-    setTimeout(function() {
-        turn[0].classList.remove('open');
-        turn[0].classList.remove('show');
-        turn[0].classList.remove('nomatch');
-        turn[1].classList.remove('open');
-        turn[1].classList.remove('show');
-        turn[1].classList.remove('nomatch');
-    }, 1000);
-    setTimeout(function() {
-        deck.removeEventListener("click", respondToCardClick);
-    }, 0);
-    setTimeout(function() {
-        deck.addEventListener("click", respondToCardClick);
-    }, 1000);
-}
-
-function makeUnclickable(card) {
-    card.classList.add('unclickable');
-}
-
-function makeClickable(card) {
-    card.classList.remove('unclickable');
-}
-
-function checkIfCardsMatch(turn) {
-    if (getCardImage(turn[0]) === getCardImage(turn[1])) {
-        return true;
+/**
+ * This function will be called when a new game begins.
+ */
+function startGame() {
+    moves = 0;
+    countMatches = 0;
+    rating = 3;
+    
+    while (deck.firstChild) {
+        deck.removeChild(deck.firstChild);
     }
-    else {
-        return false;
+    iconArray = shuffle(iconArray);
+    addCardsToDeck(iconArray);
+    movesSpan.innerHTML = moves;    
+
+    while (stars.firstChild) {
+        stars.removeChild(stars.firstChild);
+    }
+
+    for (let i = 0; i < 3; i++) {
+        liElement = document.createElement("li");
+        liElement.classList.add("fa", "fa-star");
+        stars.appendChild(liElement);
     }
 }
 
-function applyMatchStyle(turn) {
-    turn[0].classList.add("match");
-    turn[1].classList.add("match");
-}
-
-function pad(val) {
-    var valString = val + "";
-    if (valString.length < 2) {
-      return "0" + valString;
-    } else {
-      return valString;
-    }
-}
-
-function stopTimer() {
-    clearInterval(intervalId);
-  }
-
-function setTime() {
-    ++totalSeconds;
-    seconds.innerHTML = pad(totalSeconds % 60);
-    minutes.innerHTML = pad(parseInt(totalSeconds / 60));
-}
-
+/**
+ * This function will be called when a card is clicked. It will check if the 2 cards match.
+ * After all cards are matched, it will display modal.
+ */
 function respondToCardClick(event) {
     var card = event.target;
     if (moves === 0 && turn.length === 0) { // start timer after first card is clicked
@@ -161,23 +89,23 @@ function respondToCardClick(event) {
     }
 
     if (turn.length === 2) {
-        // check if cards match, keep both cards open, moves++, change rating if needed. if all cards matched, display modal.
+        // check if cards match, keep both cards open
         if (checkIfCardsMatch(turn)) {
             countMatches++;
             applyMatchStyle(turn);
         }
-        // else cards do not match, close both cards, moves++, change rating if needed. 
-        else if (!checkIfCardsMatch(turn)){
-            closeCards(turn);
-            makeClickable(turn[0]);
-            makeClickable(turn[1]);
+        // else reset both cards
+        else {
+            resetCards(turn);
+            makeClickable(turn);
         }
         
+        //increment moves counter, update rating. if all cards matched, display modal.
         turn = [];
         moves++;
         movesSpan.innerHTML = moves;    
         updateRating();
-        if (countMatches === 8) {
+        if (countMatches === 8) { // all cards are matched, display modal
             stopTimer();
             console.log('Game over');
             document.querySelector(".modal").style.display = "block";
@@ -187,6 +115,98 @@ function respondToCardClick(event) {
     }
 }
 
+/**
+ * Gets the class(icon) of a given card which helps in determining whether 2 cards match. 
+ * For eg., for a given card like <li class="card"><i class="fa fa-cube"></i></li>
+ * this function will return fa-cube
+ */
+function getCardImage(card) { 
+    const nodes = card.children;
+    for (let i = 0; i < nodes.length; i++) {
+        let classList = nodes[i].classList;
+        return classList[1];
+    }
+}
+
+/**
+ * This function will shuffle the classes(icons) within a given array.
+ * Shuffle function from http://stackoverflow.com/a/2450976
+ */
+function shuffle(array) {
+    var currentIndex = array.length, temporaryValue, randomIndex;
+
+    while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+    }
+
+    return array;
+}
+
+/**
+ * This function will add the shuffled cards to the deck. 
+ */
+function addCardsToDeck(iconArray) {
+    for (icon of iconArray) {
+        liElement = document.createElement("li");
+        liElement.classList.add("card");
+        iconElement = document.createElement("i");
+        iconElement.classList.add("fa");
+        iconElement.classList.add(icon);
+        liElement.appendChild(iconElement);
+        deck.appendChild(liElement);
+    }
+}
+
+/**
+ * Check if the cards(icons) in a single turn(move) match. A turn consists of opening 2 cards sequentially.
+ */
+function checkIfCardsMatch(turn) {
+    if (getCardImage(turn[0]) === getCardImage(turn[1])) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+function openCard(card) {
+    card.classList.add("open", "show");
+}
+
+/**
+ * This function will be called when the 2 cards dont match. It will apply the nomatch style,
+ * will disable clicking other cards until nomatch transition is complete.
+ */
+function resetCards(turn) {
+    for (card of turn) {
+        card.classList.add("nomatch");
+    }
+    
+    setTimeout(function() {
+        for (card of turn) {
+            card.classList.remove("open", "show", "nomatch");
+        }
+    }, 1000);
+
+    setTimeout(function() {
+        deck.removeEventListener("click", respondToCardClick);
+    }, 0);
+
+    setTimeout(function() {
+        deck.addEventListener("click", respondToCardClick);
+    }, 1000);
+}
+
+/**
+ * This function will update the rating in terms of stars as follows:
+ * if total moves <= 16, rating = 3 stars. This is the default.
+ * if total moves between 16 and 24, rating = 2 stars.
+ * if total moves more than 24, rating = 1 star
+ */
 function updateRating() {
     if (moves > 16 && moves <= 24) {
         // remove last li 
@@ -211,34 +231,41 @@ function updateRating() {
     }
 }
 
-function startGame() {
-    moves = 0;
-    countMatches = 0;
-    rating = 3;
-    
-    while (deck.firstChild) {
-        deck.removeChild(deck.firstChild);
-    }
-    iconArray = shuffle(iconArray);
-    addCardsToDeck(iconArray);
-    movesSpan.innerHTML = moves;    
+function clearTimer() {
+    minutes.innerHTML = "00";
+    seconds.innerHTML = "00";
+}
 
-    while (stars.firstChild) {
-        stars.removeChild(stars.firstChild);
-    }
+function makeUnclickable(card) {
+    card.classList.add('unclickable');
+}
 
-    for (let i = 0; i < 3; i++) {
-        liElement = document.createElement("li");
-        liElement.classList.add("fa", "fa-star");
-        stars.appendChild(liElement);
+function makeClickable(turn) {
+    for (card of turn) {
+        card.classList.remove('unclickable');
     }
-} 
- 
-function getCardImage(card) { 
-    const nodes = card.children;
-    for (let i = 0; i < nodes.length; i++) {
-        let classList = nodes[i].classList;
-        console.log(classList[1]);
-        return classList[1];
+}
+
+function applyMatchStyle(turn) {
+    turn[0].classList.add("match");
+    turn[1].classList.add("match");
+}
+
+function pad(val) {
+    var valString = val.toString();
+    if (valString.length < 2) {
+      return "0" + valString;
+    } else {
+      return valString;
     }
+}
+
+function stopTimer() {
+    clearInterval(intervalId);
+  }
+
+function setTime() {
+    ++totalSeconds;
+    seconds.innerHTML = pad(totalSeconds % 60);
+    minutes.innerHTML = pad(parseInt(totalSeconds / 60));
 }
