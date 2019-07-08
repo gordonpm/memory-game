@@ -1,3 +1,5 @@
+'use strict';
+
 const icons = ["fa-diamond", "fa-paper-plane-o", "fa-anchor", "fa-bolt", "fa-cube", "fa-bomb", "fa-leaf", "fa-bicycle"];
 var moves = 0;
 var countMatches = 0;
@@ -5,12 +7,14 @@ var rating = 3;
 var totalSeconds = 0;
 var iconArray = [];
 var turn = []; // will hold the pair of cards in a move
+var intervalId;
 
 const deck = document.querySelector(".deck");
 const movesSpan = document.querySelector(".moves");
 const stars = document.querySelector(".stars");
 const minutes = document.querySelector(".minutes");
 const seconds = document.querySelector(".seconds");
+const time = document.querySelector(".time");
 
 initialize();
 startGame();
@@ -25,7 +29,7 @@ function initialize() {
     // add the listener to the deck which in turn listens to card clicks
     deck.addEventListener("click", respondToCardClick);
 
-    let playBtn = document.querySelector(".playBtn");
+    const playBtn = document.querySelector(".playBtn");
     playBtn.addEventListener("click", function(){
         document.querySelector(".modal").style.display = "none";
         totalSeconds = 0;
@@ -34,7 +38,7 @@ function initialize() {
         startGame();
     });
 
-    let restartBtn = document.querySelector(".restart");
+    const restartBtn = document.querySelector(".restart");
     restartBtn.addEventListener("click", function(){
         totalSeconds = 0;
         stopTimer();
@@ -66,7 +70,7 @@ function startGame() {
     }
 
     for (let i = 0; i < 3; i++) {
-        liElement = document.createElement("li");
+        let liElement = document.createElement("li");
         liElement.classList.add("fa", "fa-star");
         stars.appendChild(liElement);
     }
@@ -78,6 +82,7 @@ function startGame() {
  */
 function respondToCardClick(event) {
     let card = event.target;
+    
     if (moves === 0 && turn.length === 0) { // start timer after first card is clicked
         intervalId = setInterval(setTime, 1000);
     }
@@ -107,7 +112,12 @@ function respondToCardClick(event) {
         updateRating();
         if (countMatches === 8) { // all cards are matched, display modal
             stopTimer();
-            console.log('Game over');
+            if (minutes.textContent === "00") { // if time is less than a minute, only display seconds.
+                time.innerHTML = seconds.textContent + "s";    
+            }
+            else {
+                time.innerHTML = minutes.textContent + "m" + " " + seconds.textContent + "s";
+            }
             document.querySelector(".modal").style.display = "block";
             document.querySelector(".movesCounter").textContent = moves;
             document.querySelector(".rating").textContent = rating;
@@ -150,10 +160,10 @@ function shuffle(array) {
  * This function will add the shuffled cards to the deck. 
  */
 function addCardsToDeck(iconArray) {
-    for (icon of iconArray) {
-        liElement = document.createElement("li");
+    for (let icon of iconArray) {
+        let liElement = document.createElement("li");
         liElement.classList.add("card");
-        iconElement = document.createElement("i");
+        let iconElement = document.createElement("i");
         iconElement.classList.add("fa");
         iconElement.classList.add(icon);
         liElement.appendChild(iconElement);
@@ -182,12 +192,12 @@ function openCard(card) {
  * will disable clicking other cards until nomatch transition is complete.
  */
 function resetCards(turn) {
-    for (card of turn) {
+    for (let card of turn) {
         card.classList.add("nomatch");
     }
     
     setTimeout(function() {
-        for (card of turn) {
+        for (let card of turn) {
             card.classList.remove("open", "show", "nomatch");
         }
     }, 1000);
@@ -209,24 +219,24 @@ function resetCards(turn) {
  */
 function updateRating() {
     if (moves > 16 && moves <= 24) {
-        // remove last li 
-        stars.removeChild(stars.children[2]);
-
-        // append li with empty star icon
-        liElement = document.createElement("li");
-        liElement.classList.add("fa", "fa-star-o");
-        stars.appendChild(liElement);
-        rating = 2;
+        // replace 3rd li with empty star icon if not already there
+        if (!stars.children[2].classList.contains("fa-star-o")) {
+            stars.removeChild(stars.children[2]);
+            let liElement = document.createElement("li");
+            liElement.classList.add("fa", "fa-star-o");
+            stars.appendChild(liElement);
+            rating = 2;
+        }
     }
     else if (moves > 24) {
-        // remove second last li
-        stars.removeChild(stars.children[1]);
-        
-        // replace with empty star icon so that there will be 1 full and 2 empty stars
-        liElement = document.createElement("li");
-        liElement.classList.add("fa", "fa-star-o");
-        stars.appendChild(liElement);
-        rating = 1;
+        // replace 2nd li so that there will be 1 full and 2 empty stars
+        if (!stars.children[1].classList.contains("fa-star-o")) {
+            stars.removeChild(stars.children[1]);
+            let liElement = document.createElement("li");
+            liElement.classList.add("fa", "fa-star-o");
+            stars.appendChild(liElement);
+            rating = 1;
+        }
     }
 }
 
@@ -240,13 +250,13 @@ function makeUnclickable(card) {
 }
 
 function makeClickable(turn) {
-    for (card of turn) {
+    for (let card of turn) {
         card.classList.remove('unclickable');
     }
 }
 
 function applyMatchStyle(turn) {
-    for (card of turn) {
+    for (let card of turn) {
         card.classList.add("match");
     }
 }
@@ -269,6 +279,7 @@ function stopTimer() {
 
 function setTime() {
     ++totalSeconds;
+
     seconds.innerHTML = pad(totalSeconds % 60);
     minutes.innerHTML = pad(parseInt(totalSeconds / 60));
 }
