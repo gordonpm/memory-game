@@ -1,13 +1,13 @@
 'use strict';
 
 const icons = ["fa-diamond", "fa-paper-plane-o", "fa-anchor", "fa-bolt", "fa-cube", "fa-bomb", "fa-leaf", "fa-bicycle"];
-var moves = 0;
-var countMatches = 0;
-var rating = 3;
-var totalSeconds = 0;
-var iconArray = [];
-var turn = []; // will hold the pair of cards in a move
-var intervalId;
+let moves = 0;
+let countMatches = 0;
+let rating = 3;
+let totalSeconds = 0;
+let iconArray = [];
+let turn = []; // will hold the pair of cards in a move
+let intervalId;
 
 const deck = document.querySelector(".deck");
 const movesSpan = document.querySelector(".moves");
@@ -32,19 +32,18 @@ function initialize() {
     const playBtn = document.querySelector(".playBtn");
     playBtn.addEventListener("click", function(){
         document.querySelector(".modal").style.display = "none";
-        totalSeconds = 0;
-        stopTimer();
-        clearTimer();
-        startGame();
+        restartGame();
     });
 
     const restartBtn = document.querySelector(".restart");
-    restartBtn.addEventListener("click", function(){
-        totalSeconds = 0;
-        stopTimer();
-        clearTimer();
-        startGame();
-    });
+    restartBtn.addEventListener("click", restartGame);
+}
+
+function restartGame() {
+    totalSeconds = 0;
+    stopTimer();
+    clearTimer();
+    startGame();
 }
 
 /**
@@ -161,11 +160,11 @@ function shuffle(array) {
  */
 function addCardsToDeck(iconArray) {
     for (let icon of iconArray) {
-        let liElement = document.createElement("li");
+        const liElement = document.createElement("li");
         liElement.classList.add("card");
-        let iconElement = document.createElement("i");
-        iconElement.classList.add("fa");
-        iconElement.classList.add(icon);
+        const iconElement = document.createElement("i");
+        iconElement.classList.add("fa", icon);
+        //iconElement.classList.add(icon);
         liElement.appendChild(iconElement);
         deck.appendChild(liElement);
     }
@@ -175,12 +174,7 @@ function addCardsToDeck(iconArray) {
  * Check if the cards(icons) in a single turn(move) match. A turn consists of opening 2 cards sequentially.
  */
 function checkIfCardsMatch(turn) {
-    if (getCardImage(turn[0]) === getCardImage(turn[1])) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return getCardImage(turn[0]) === getCardImage(turn[1]);
 }
 
 function openCard(card) {
@@ -221,23 +215,23 @@ function updateRating() {
     if (moves > 16 && moves <= 24) {
         // replace 3rd li with empty star icon if not already there
         if (!stars.children[2].classList.contains("fa-star-o")) {
-            stars.removeChild(stars.children[2]);
-            let liElement = document.createElement("li");
-            liElement.classList.add("fa", "fa-star-o");
-            stars.appendChild(liElement);
-            rating = 2;
+            modifyStars(stars.children[2], 2);
         }
     }
     else if (moves > 24) {
         // replace 2nd li so that there will be 1 full and 2 empty stars
         if (!stars.children[1].classList.contains("fa-star-o")) {
-            stars.removeChild(stars.children[1]);
-            let liElement = document.createElement("li");
-            liElement.classList.add("fa", "fa-star-o");
-            stars.appendChild(liElement);
-            rating = 1;
+            modifyStars(stars.children[1], 1);
         }
     }
+}
+
+function modifyStars(item, number) {
+    stars.removeChild(item);
+    let liElement = document.createElement("li");
+    liElement.classList.add("fa", "fa-star-o");
+    stars.appendChild(liElement);
+    rating = number;
 }
 
 function clearTimer() {
@@ -265,7 +259,7 @@ function applyMatchStyle(turn) {
  * This function will pad '0' to sec or min value if needed.
  */
 function pad(val) {
-    let valString = val.toString();
+    const valString = val.toString();
     if (valString.length < 2) {
       return "0" + valString;
     } else {
@@ -279,7 +273,6 @@ function stopTimer() {
 
 function setTime() {
     ++totalSeconds;
-
     seconds.innerHTML = pad(totalSeconds % 60);
     minutes.innerHTML = pad(parseInt(totalSeconds / 60));
 }
